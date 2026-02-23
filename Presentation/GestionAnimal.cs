@@ -84,7 +84,6 @@ public class GestionAnimal
             Particularite = particularites
         };
 
-        // Ajouter les couleurs
         Console.Write("Couleurs (séparées par des virgules): ");
         string? couleursStr = Console.ReadLine();
         if (!string.IsNullOrWhiteSpace(couleursStr))
@@ -97,7 +96,6 @@ public class GestionAnimal
             AnimalDAO.Ajouter(animal);
             Console.WriteLine($"Animal ajouté avec succès! ID: {identifiant}");
             
-            // Créer automatiquement l'entrée au refuge (chaque animal DOIT avoir au moins une entrée)
             Console.WriteLine("\nCréation de l'entrée au refuge...");
             Console.Write("Raison d'entrée (1=abandon, 2=errant, 3=deces_proprietaire, 4=saisie, 5=retour_adoption, 6=retour_famille_accueil): ");
             string? raisonChoix = Console.ReadLine();

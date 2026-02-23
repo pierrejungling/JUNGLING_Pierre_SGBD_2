@@ -16,7 +16,32 @@
             <TextBox x:Name="TxtIdAnimal" Width="140" Margin="0,0,10,0"/>
             <Button Content="Afficher les vaccinations" Padding="10,5" Click="Afficher_Click"/>
         </StackPanel>
-        <ListBox x:Name="ListeVaccinations" Grid.Row="2" DisplayMemberPath="DateVaccination"/>
-        <Button Grid.Row="3" Content="Fermer" HorizontalAlignment="Left" Margin="0,10,0,0" Padding="12,6" Click="Fermer_Click"/>
+        <ListBox x:Name="ListeVaccinations" Grid.Row="2" Padding="2">
+            <ListBox.ItemContainerStyle>
+                <Style TargetType="ListBoxItem">
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                </Style>
+            </ListBox.ItemContainerStyle>
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <Border HorizontalAlignment="Stretch" Padding="8,6" Margin="0,2" Background="#F5F5F5" CornerRadius="2" BorderBrush="#DDD" BorderThickness="0 0 0 1">
+                        <StackPanel>
+                            <TextBlock FontWeight="SemiBold" FontSize="13">
+                                <Run Text="{Binding Vaccin.Nom}"/>
+                                <Run Text=" · "/><Run Text="{Binding DateVaccination, StringFormat={}{0:dd/MM/yyyy}}"/>
+                            </TextBlock>
+                            <TextBlock FontSize="11" Foreground="#555" Margin="0,2,0,0">
+                                <Run Text="Animal: "/><Run Text="{Binding Animal.Nom}"/>
+                                <Run Text=" ("/><Run Text="{Binding Animal.Identifiant}"/><Run Text=")"/>
+                            </TextBlock>
+                        </StackPanel>
+                    </Border>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+        <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,10,0,0">
+            <Button Content="Ajouter" Margin="0,0,8,0" Padding="12,6" Click="Ajouter_Click"/>
+            <Button Content="Fermer" Padding="12,6" Click="Fermer_Click"/>
+        </StackPanel>
     </Grid>
 </Window>

@@ -1,11 +1,28 @@
--- Script de création des procédures stockées pour l'application Refuge Animaux
--- Auteur: JUNGLING Pierre - Travail 2 partie 2 (application fenêtrée + procédures stockées)
--- Référence: Notes de cours Chapitre 11 (PL/pgSQL) et Chapitre 12 (couche accès aux données)
--- À exécuter après creertables_JUNGLING_Pierre.sql
-
 -- ============================================
 -- ANIMAL
 -- ============================================
+
+CREATE OR REPLACE FUNCTION animal_prochain_identifiant(p_date_entree DATE)
+RETURNS VARCHAR(11) AS $$
+DECLARE
+    prefix VARCHAR(6);
+    prochain_num INTEGER;
+    dernier_id VARCHAR(11);
+BEGIN
+    prefix := TO_CHAR(p_date_entree, 'YYMMDD');
+    SELECT identifiant INTO dernier_id
+    FROM ANIMAL
+    WHERE identifiant LIKE prefix || '%'
+    ORDER BY identifiant DESC
+    LIMIT 1;
+    IF dernier_id IS NULL THEN
+        prochain_num := 1;
+    ELSE
+        prochain_num := CAST(SUBSTRING(dernier_id FROM 7 FOR 5) AS INTEGER) + 1;
+    END IF;
+    RETURN prefix || LPAD(prochain_num::TEXT, 5, '0');
+END;
+$$ LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION animal_inserer(
     p_identifiant VARCHAR(11),
@@ -98,12 +115,12 @@ BEGIN
            a.date_deces, a.description, a.date_sterilisation, a.sterilise, a.date_naissance
     FROM ANIMAL a
     WHERE a.date_deces IS NULL
+    AND EXISTS (SELECT 1 FROM ANI_ENTREE e WHERE e.ani_identifiant = a.identifiant)
     AND (
         NOT EXISTS (SELECT 1 FROM ANI_SORTIE s WHERE s.ani_identifiant = a.identifiant)
-        OR EXISTS (
-            SELECT 1 FROM ANI_ENTREE e
-            WHERE e.ani_identifiant = a.identifiant
-            AND e.date_entree > COALESCE(
+        OR (
+            (SELECT MAX(e2.date_entree) FROM ANI_ENTREE e2 WHERE e2.ani_identifiant = a.identifiant)
+            >= COALESCE(
                 (SELECT MAX(s2.date_sortie) FROM ANI_SORTIE s2 WHERE s2.ani_identifiant = a.identifiant),
                 '1900-01-01'::date
             )
@@ -132,6 +149,13 @@ BEGIN
     FROM ANI_COMPATIBILITE ac
     INNER JOIN COMPATIBILITE c ON ac.comp_identifiant = c.identifiant
     WHERE ac.ani_identifiant = p_identifiant;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION couleur_lister_toutes()
+RETURNS TABLE(nom_couleur VARCHAR(50)) AS $$
+BEGIN
+    RETURN QUERY SELECT c.nom_couleur FROM COULEUR c ORDER BY c.nom_couleur;
 END;
 $$ LANGUAGE plpgsql;
 
@@ -228,7 +252,7 @@ RETURNS INTEGER AS $$
 DECLARE
     v_id INTEGER;
 BEGIN
-    INSERT INTO CONTACT (nom, prenom, rue, cp, localite, registre_national, GSM, telephone, email)
+    INSERT INTO CONTACT (nom, prenom, rue, cp, localite, registre_national, gsm, telephone, email)
     VALUES (p_nom, p_prenom, p_rue, p_cp, p_localite, p_registre_national, p_gsm, p_telephone, p_email)
     RETURNING contact_identifiant INTO v_id;
     RETURN v_id;
@@ -281,7 +305,7 @@ BEGIN
     UPDATE CONTACT
     SET nom = p_nom, prenom = p_prenom, rue = p_rue, cp = p_cp,
         localite = p_localite, registre_national = p_registre_national,
-        "GSM" = p_gsm, telephone = p_telephone, email = p_email
+        gsm = p_gsm, telephone = p_telephone, email = p_email
     WHERE contact_identifiant = p_id;
 END;
 $$ LANGUAGE plpgsql;
@@ -378,6 +402,20 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+CREATE OR REPLACE FUNCTION adoption_supprimer(
+    p_ani_identifiant VARCHAR(11),
+    p_adop_contact INTEGER,
+    p_date_demande DATE
+)
+RETURNS VOID AS $$
+BEGIN
+    DELETE FROM ADOPTION
+    WHERE ani_identifiant = p_ani_identifiant
+      AND adop_contact = p_adop_contact
+      AND date_demande = p_date_demande;
+END;
+$$ LANGUAGE plpgsql;
+
 CREATE OR REPLACE FUNCTION adoption_consulter_par_animal(p_ani_identifiant VARCHAR(11))
 RETURNS TABLE(statut VARCHAR(50), date_demande DATE, ani_identifiant VARCHAR(11), adop_contact INTEGER) AS $$
 BEGIN
@@ -397,6 +435,41 @@ BEGIN
     ORDER BY a.date_demande DESC;
 END;
 $$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION creer_sortie_adoption_acceptee()
+RETURNS TRIGGER AS $$
+DECLARE
+    v_date_acceptation DATE := NEW.date_demande;
+BEGIN
+    IF NEW.statut = 'acceptee' THEN
+        IF (TG_OP = 'INSERT') OR (OLD.statut IS NOT NULL AND OLD.statut <> 'acceptee') THEN
+            INSERT INTO ANI_SORTIE (raison, date_sortie, ani_identifiant, sortie_contact)
+            VALUES ('adoption', v_date_acceptation, NEW.ani_identifiant, NEW.adop_contact);
+            UPDATE FAMILLE_ACCUEIL SET date_fin = v_date_acceptation
+            WHERE fa_ani_identifiant = NEW.ani_identifiant AND date_fin IS NULL;
+            IF NOT EXISTS (
+                SELECT 1 FROM FAMILLE_ACCUEIL
+                WHERE fa_ani_identifiant = NEW.ani_identifiant AND fa_contact = NEW.adop_contact AND date_fin IS NULL
+            ) THEN
+                INSERT INTO FAMILLE_ACCUEIL (date_debut, date_fin, fa_ani_identifiant, fa_contact)
+                VALUES (v_date_acceptation, NULL, NEW.ani_identifiant, NEW.adop_contact);
+            END IF;
+        END IF;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trigger_creer_sortie_adoption_acceptee_update ON ADOPTION;
+DROP TRIGGER IF EXISTS trigger_creer_sortie_adoption_acceptee_insert ON ADOPTION;
+CREATE TRIGGER trigger_creer_sortie_adoption_acceptee_insert
+AFTER INSERT ON ADOPTION
+FOR EACH ROW
+EXECUTE FUNCTION creer_sortie_adoption_acceptee();
+CREATE TRIGGER trigger_creer_sortie_adoption_acceptee_update
+AFTER UPDATE ON ADOPTION
+FOR EACH ROW
+EXECUTE FUNCTION creer_sortie_adoption_acceptee();
 
 -- ============================================
 -- ACCUEIL (FAMILLE_ACCUEIL)
@@ -465,8 +538,41 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+CREATE OR REPLACE FUNCTION cloturer_accueil_retour_adoption()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.raison = 'retour_adoption' THEN
+        UPDATE FAMILLE_ACCUEIL
+        SET date_fin = NEW.date_entree
+        WHERE fa_ani_identifiant = NEW.ani_identifiant AND date_fin IS NULL;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trigger_cloturer_accueil_retour_adoption ON ANI_ENTREE;
+CREATE TRIGGER trigger_cloturer_accueil_retour_adoption
+AFTER INSERT ON ANI_ENTREE
+FOR EACH ROW
+WHEN (NEW.raison = 'retour_adoption')
+EXECUTE FUNCTION cloturer_accueil_retour_adoption();
+
+CREATE OR REPLACE FUNCTION rendre_animal_disponible_adoption_entree()
+RETURNS TRIGGER AS $$
+BEGIN
+    DELETE FROM ADOPTION WHERE ani_identifiant = NEW.ani_identifiant;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trigger_rendre_disponible_adoption_entree ON ANI_ENTREE;
+CREATE TRIGGER trigger_rendre_disponible_adoption_entree
+AFTER INSERT ON ANI_ENTREE
+FOR EACH ROW
+EXECUTE FUNCTION rendre_animal_disponible_adoption_entree();
+
 -- ============================================
--- SORTIE (ANI_SORTIE) + mise à jour date_deces si raison = deces_animal
+-- SORTIE
 -- ============================================
 
 CREATE OR REPLACE FUNCTION sortie_ajouter(

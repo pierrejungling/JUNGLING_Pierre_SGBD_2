@@ -39,7 +39,6 @@ public class GestionAdoption
             return;
         }
 
-        // Vérifier qu'il n'y a pas déjà une adoption (relation 1-1)
         var adoptionExistante = AdoptionDAO.ConsulterParAnimal(animalId);
         if (adoptionExistante != null)
         {

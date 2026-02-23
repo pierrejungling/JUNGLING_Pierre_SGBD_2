@@ -22,5 +22,17 @@ public partial class FenetreGestionVaccinations : Window
         catch (System.Exception ex) { MessageBox.Show(ex.Message, "Erreur", MessageBoxButton.OK, MessageBoxImage.Error); }
     }
 
+    private void Ajouter_Click(object sender, RoutedEventArgs e)
+    {
+        var win = new FenetreAjoutVaccination { Owner = this };
+        if (win.ShowDialog() == true && !string.IsNullOrWhiteSpace(TxtIdAnimal.Text))
+            Afficher_Click(null!, null!);
+    }
+
+    private void Rafraichir_Click(object sender, RoutedEventArgs e)
+    {
+        if (!string.IsNullOrWhiteSpace(TxtIdAnimal.Text)) Afficher_Click(null!, null!);
+    }
+
     private void Fermer_Click(object sender, RoutedEventArgs e) => Close();
 }

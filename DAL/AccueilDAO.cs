@@ -1,4 +1,5 @@
 using Npgsql;
+using NpgsqlTypes;
 using Metier;
 
 namespace DAL;
@@ -12,8 +13,12 @@ public class AccueilDAO
         using var cmd = new NpgsqlCommand(
             "SELECT accueil_ajouter(@date_debut, @date_fin, @fa_ani_identifiant, @fa_contact)",
             conn);
-        cmd.Parameters.AddWithValue("date_debut", accueil.DateDebut);
-        cmd.Parameters.AddWithValue("date_fin", (object?)accueil.DateFin ?? DBNull.Value);
+        var pDebut = new NpgsqlParameter("date_debut", NpgsqlDbType.Date);
+        pDebut.Value = accueil.DateDebut.Date;
+        cmd.Parameters.Add(pDebut);
+        var pFin = new NpgsqlParameter("date_fin", NpgsqlDbType.Date);
+        pFin.Value = accueil.DateFin?.Date ?? (object)DBNull.Value;
+        cmd.Parameters.Add(pFin);
         cmd.Parameters.AddWithValue("fa_ani_identifiant", accueil.AnimalAccueilli.Identifiant);
         cmd.Parameters.AddWithValue("fa_contact", accueil.FamilleAccueil.Identifiant);
         cmd.ExecuteNonQuery();

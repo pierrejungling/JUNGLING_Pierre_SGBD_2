@@ -1,4 +1,5 @@
 using Npgsql;
+using NpgsqlTypes;
 using Metier;
 
 namespace DAL;
@@ -13,7 +14,9 @@ public class AdoptionDAO
             "SELECT adoption_ajouter(@statut, @date_demande, @ani_identifiant, @adop_contact)",
             conn);
         cmd.Parameters.AddWithValue("statut", adoption.Statut);
-        cmd.Parameters.AddWithValue("date_demande", adoption.DateDemande);
+        var pDate = new NpgsqlParameter("date_demande", NpgsqlDbType.Date);
+        pDate.Value = adoption.DateDemande.Date;
+        cmd.Parameters.Add(pDate);
         cmd.Parameters.AddWithValue("ani_identifiant", adoption.AnimalAdopte.Identifiant);
         cmd.Parameters.AddWithValue("adop_contact", adoption.Adoptant.Identifiant);
         cmd.ExecuteNonQuery();
@@ -26,6 +29,19 @@ public class AdoptionDAO
         using var cmd = new NpgsqlCommand("SELECT adoption_modifier_statut(@ani_id, @statut)", conn);
         cmd.Parameters.AddWithValue("ani_id", animalId);
         cmd.Parameters.AddWithValue("statut", nouveauStatut);
+        cmd.ExecuteNonQuery();
+    }
+
+    public static void Supprimer(string animalId, int adoptantId, DateTime dateDemande)
+    {
+        using var conn = ConnexionBD.GetConnection();
+        conn.Open();
+        using var cmd = new NpgsqlCommand("SELECT adoption_supprimer(@ani_id, @adop_contact, @date_demande)", conn);
+        cmd.Parameters.AddWithValue("ani_id", animalId);
+        cmd.Parameters.AddWithValue("adop_contact", adoptantId);
+        var pDate = new NpgsqlParameter("date_demande", NpgsqlDbType.Date);
+        pDate.Value = dateDemande.Date;
+        cmd.Parameters.Add(pDate);
         cmd.ExecuteNonQuery();
     }
 

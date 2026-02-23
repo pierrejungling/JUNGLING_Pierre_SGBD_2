@@ -1,0 +1,59 @@
+<Window x:Class="Presentation.FenetreInfosAnimal"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Infos animal - description, particularités, couleurs, compatibilités" Height="520" Width="500"
+        WindowStartupLocation="CenterOwner" ResizeMode="CanResize">
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <Grid Margin="15">
+<Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+            <TextBlock x:Name="TxtTitre" Grid.Row="0" Text="Animal" FontWeight="Bold" FontSize="14" Margin="0,0,0,10"/>
+            <StackPanel Grid.Row="1" Margin="0,0,0,12">
+                <TextBlock Text="Description" FontWeight="SemiBold" Margin="0,0,0,4"/>
+                <TextBox x:Name="TbDescription" Height="60" TextWrapping="Wrap" AcceptsReturn="True" Padding="4"/>
+                <Button Content="Enregistrer description" Margin="0,4,0,0" Padding="8,4" HorizontalAlignment="Left" Click="EnregistrerDescription_Click"/>
+            </StackPanel>
+            <StackPanel Grid.Row="2" Margin="0,0,0,12">
+                <TextBlock Text="Particularités" FontWeight="SemiBold" Margin="0,0,0,4"/>
+                <TextBox x:Name="TbParticularite" Height="50" TextWrapping="Wrap" Padding="4"/>
+                <Button Content="Enregistrer particularités" Margin="0,4,0,0" Padding="8,4" HorizontalAlignment="Left" Click="EnregistrerParticularite_Click"/>
+            </StackPanel>
+            <StackPanel Grid.Row="3" Margin="0,0,0,12">
+                <TextBlock Text="Couleurs" FontWeight="SemiBold" Margin="0,0,0,4"/>
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                    <ComboBox x:Name="CbCouleur" Width="140" Margin="0,0,8,0" Padding="4,2" IsEditable="True"/>
+                    <Button Content="Ajouter couleur" Padding="8,4" Click="AjouterCouleur_Click"/>
+                </StackPanel>
+                <ListBox x:Name="ListeCouleurs" Height="80" SelectionMode="Single" Padding="4"/>
+                <Button Content="Supprimer la couleur sélectionnée" Margin="0,4,0,0" Padding="8,4" HorizontalAlignment="Left" Click="SupprimerCouleur_Click"/>
+            </StackPanel>
+            <StackPanel Grid.Row="4">
+                <TextBlock Text="Compatibilités" FontWeight="SemiBold" Margin="0,0,0,4"/>
+                <Grid Margin="0,0,0,4">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <ComboBox x:Name="CbTypeCompat" Grid.Column="0" Margin="0,0,6,0" Padding="4,2"/>
+                    <CheckBox x:Name="CkCompatValeur" Grid.Column="1" Content="Oui" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <TextBox x:Name="TbCompatDesc" Grid.Column="2" Padding="4,2" MinWidth="80"/>
+                </Grid>
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                    <Button Content="Ajouter compatibilité" Padding="8,4" Margin="0,0,8,0" Click="AjouterCompatibilite_Click"/>
+                </StackPanel>
+                <ListBox x:Name="ListeCompatibilites" Height="90" SelectionMode="Single" Padding="4"/>
+                <Button Content="Supprimer la compatibilité sélectionnée" Margin="0,4,0,0" Padding="8,4" HorizontalAlignment="Left" Click="SupprimerCompatibilite_Click"/>
+            </StackPanel>
+            <StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+                <Button Content="Valider les changements" Padding="16,8" Click="Valider_Click"/>
+            </StackPanel>
+        </Grid>
+    </ScrollViewer>
+</Window>

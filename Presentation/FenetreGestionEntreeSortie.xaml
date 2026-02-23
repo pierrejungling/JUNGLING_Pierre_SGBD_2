@@ -3,6 +3,9 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Gestion des entrées/sorties" Height="380" Width="520"
         WindowStartupLocation="CenterOwner">
+    <Window.Resources>
+        <Presentation:EntreeSortieDisplayConverter x:Key="EntreeSortieConv" xmlns:Presentation="clr-namespace:Presentation"/>
+    </Window.Resources>
     <Grid Margin="15">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -17,7 +20,24 @@
             <Button Content="Entrées" Padding="10,5" Click="Entrees_Click"/>
             <Button Content="Sorties" Padding="10,5" Margin="5,0,0,0" Click="Sorties_Click"/>
         </StackPanel>
-        <ListBox x:Name="Liste" Grid.Row="2"/>
-        <Button Grid.Row="3" Content="Fermer" HorizontalAlignment="Left" Margin="0,10,0,0" Padding="12,6" Click="Fermer_Click"/>
+        <ListBox x:Name="Liste" Grid.Row="2" Padding="2">
+            <ListBox.ItemContainerStyle>
+                <Style TargetType="ListBoxItem">
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                </Style>
+            </ListBox.ItemContainerStyle>
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <Border HorizontalAlignment="Stretch" Padding="8,6" Margin="0,2" Background="#F5F5F5" CornerRadius="2" BorderBrush="#DDD" BorderThickness="0 0 0 1">
+                        <TextBlock Text="{Binding Converter={StaticResource EntreeSortieConv}}" TextWrapping="Wrap" FontSize="12"/>
+                    </Border>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+        <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,10,0,0">
+            <Button Content="Ajouter entrée" Margin="0,0,8,0" Padding="12,6" Click="AjouterEntree_Click"/>
+            <Button Content="Ajouter sortie" Margin="0,0,8,0" Padding="12,6" Click="AjouterSortie_Click"/>
+            <Button Content="Fermer" Padding="12,6" Click="Fermer_Click"/>
+        </StackPanel>
     </Grid>
 </Window>

@@ -27,5 +27,5 @@ public partial class FenetreListeAnimauxRefuge : Window
         }
     }
 
-    private void Rafraichir_Click(object sender, RoutedEventArgs e) => Charger();
+    private void Fermer_Click(object sender, RoutedEventArgs e) => Close();
 }

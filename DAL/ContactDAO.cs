@@ -146,7 +146,6 @@ public class ContactDAO
         }
         catch (NpgsqlException ex) when (ex.SqlState == "42P01")
         {
-            // Table ROLE ou PERSONNE_ROLE manquante
         }
     }
 

@@ -1,11 +1,11 @@
 using Npgsql;
+using NpgsqlTypes;
 using Metier;
 
 namespace DAL;
 
 public class SortieDAO
 {
-    /// <param name="dateDecesAnimal">Si raison = 'deces_animal', passer la date de décès pour mettre à jour ANIMAL.date_deces (déclencheur BDD). Sinon null.</param>
     public static void Ajouter(Sortie sortie, DateTime? dateDecesAnimal = null)
     {
         using var conn = ConnexionBD.GetConnection();
@@ -14,10 +14,14 @@ public class SortieDAO
             "SELECT sortie_ajouter(@raison, @date_sortie, @ani_identifiant, @sortie_contact, @date_deces_animal)",
             conn);
         cmd.Parameters.AddWithValue("raison", sortie.Raison);
-        cmd.Parameters.AddWithValue("date_sortie", sortie.DateSortie);
+        var pDateSortie = new NpgsqlParameter("date_sortie", NpgsqlDbType.Date);
+        pDateSortie.Value = sortie.DateSortie.Date;
+        cmd.Parameters.Add(pDateSortie);
         cmd.Parameters.AddWithValue("ani_identifiant", sortie.Animal.Identifiant);
-        cmd.Parameters.AddWithValue("sortie_contact", (object?)sortie.Contact?.Identifiant ?? DBNull.Value);
-        cmd.Parameters.AddWithValue("date_deces_animal", (object?)dateDecesAnimal ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("sortie_contact", sortie.Contact == null || sortie.Contact.Identifiant <= 0 ? DBNull.Value : sortie.Contact.Identifiant);
+        var pDeces = new NpgsqlParameter("date_deces_animal", NpgsqlDbType.Date);
+        pDeces.Value = dateDecesAnimal?.Date ?? (object)DBNull.Value;
+        cmd.Parameters.Add(pDeces);
         cmd.ExecuteNonQuery();
     }
 

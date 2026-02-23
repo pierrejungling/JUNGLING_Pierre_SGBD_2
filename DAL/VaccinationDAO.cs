@@ -1,4 +1,5 @@
 using Npgsql;
+using NpgsqlTypes;
 using Metier;
 
 namespace DAL;
@@ -12,7 +13,9 @@ public class VaccinationDAO
         using var cmd = new NpgsqlCommand(
             "SELECT vaccination_ajouter(@date, @animal, @nom_vaccin)",
             conn);
-        cmd.Parameters.AddWithValue("date", vaccination.DateVaccination);
+        var pDate = new NpgsqlParameter("date", NpgsqlDbType.Date);
+        pDate.Value = vaccination.DateVaccination.Date;
+        cmd.Parameters.Add(pDate);
         cmd.Parameters.AddWithValue("animal", vaccination.Animal.Identifiant);
         cmd.Parameters.AddWithValue("nom_vaccin", vaccination.Vaccin.Nom);
         cmd.ExecuteNonQuery();

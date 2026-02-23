@@ -6,14 +6,9 @@ using Presentation;
 
 try
 {
-    // Chargement de la configuration depuis appsettings.json
     string configPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "appsettings.json");
-    
     if (!File.Exists(configPath))
-    {
-        // Si le fichier n'existe pas dans le dossier d'exécution, chercher dans le dossier du projet
         configPath = Path.Combine(Directory.GetCurrentDirectory(), "appsettings.json");
-    }
     
     if (!File.Exists(configPath))
     {
@@ -44,8 +39,7 @@ try
     string password = dbConfig.TryGetProperty("Password", out JsonElement passEl) ? passEl.GetString() ?? "" : "";
 
     ConnexionBD.SetConnectionString(host, database, username, password, port);
-    
-    // Test de la connexion
+
     try
     {
         using var testConn = ConnexionBD.GetConnection();
@@ -74,10 +68,8 @@ try
         throw;
     }
 
-    // Vérifier que la console est disponible et configurée correctement
     try
     {
-        // Tester si nous pouvons lire depuis la console
         if (!Console.IsInputRedirected && Console.In == null)
         {
             throw new InvalidOperationException("La console d'entrée n'est pas disponible.");
@@ -98,7 +90,6 @@ try
         return;
     }
 
-    // Menu principal
     MenuPrincipal menu = new MenuPrincipal();
     menu.Afficher();
 }
@@ -117,7 +108,6 @@ catch (NpgsqlException ex)
     Console.WriteLine("3. Les identifiants dans appsettings.json sont corrects");
     Console.WriteLine("4. Le port est correct (par défaut: 5432)");
     
-    // Essayer de lire une touche, mais gérer le cas où la console n'est pas disponible (debug console)
     try
     {
         Console.WriteLine("\nAppuyez sur une touche pour quitter...");
@@ -125,7 +115,6 @@ catch (NpgsqlException ex)
     }
     catch (InvalidOperationException)
     {
-        // Si la console n'est pas disponible (debug console VS Code), attendre un peu puis quitter
         Console.WriteLine("\nFermeture automatique dans 3 secondes...");
         System.Threading.Thread.Sleep(3000);
     }
@@ -139,8 +128,7 @@ catch (Exception ex)
         Console.WriteLine($"Erreur interne: {ex.InnerException.Message}");
     }
     Console.WriteLine($"\nStack trace: {ex.StackTrace}");
-    
-    // Essayer de lire une touche, mais gérer le cas où la console n'est pas disponible (debug console)
+
     try
     {
         Console.WriteLine("\nAppuyez sur une touche pour quitter...");
@@ -148,7 +136,6 @@ catch (Exception ex)
     }
     catch (InvalidOperationException)
     {
-        // Si la console n'est pas disponible (debug console VS Code), attendre un peu puis quitter
         Console.WriteLine("\nFermeture automatique dans 3 secondes...");
         System.Threading.Thread.Sleep(3000);
     }

@@ -1,5 +1,8 @@
+using System.Globalization;
 using System.Windows;
+using System.Windows.Data;
 using DAL;
+using Metier;
 
 namespace Presentation;
 
@@ -34,5 +37,40 @@ public partial class FenetreGestionEntreeSortie : Window
         catch (System.Exception ex) { MessageBox.Show(ex.Message, "Erreur", MessageBoxButton.OK, MessageBoxImage.Error); }
     }
 
+    private void AjouterEntree_Click(object sender, RoutedEventArgs e)
+    {
+        var win = new FenetreAjoutEntree { Owner = this };
+        if (win.ShowDialog() == true && !string.IsNullOrWhiteSpace(TxtIdAnimal.Text))
+            Entrees_Click(null!, null!);
+    }
+
+    private void AjouterSortie_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            var win = new FenetreAjoutSortie { Owner = this };
+            if (win.ShowDialog() == true && !string.IsNullOrWhiteSpace(TxtIdAnimal.Text))
+                Sorties_Click(null!, null!);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(ex.Message, "Erreur", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
     private void Fermer_Click(object sender, RoutedEventArgs e) => Close();
+}
+
+public sealed class EntreeSortieDisplayConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value is Entree e)
+            return $"{e.DateEntree:dd/MM/yyyy} - {e.Raison}\nContact: {e.Contact?.Prenom} {e.Contact?.Nom}".TrimEnd();
+        if (value is Sortie s)
+            return $"{s.DateSortie:dd/MM/yyyy} - {s.Raison}\nContact: {s.Contact?.Prenom} {s.Contact?.Nom}".TrimEnd();
+        return value?.ToString() ?? "";
+    }
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => throw new NotImplementedException();
 }

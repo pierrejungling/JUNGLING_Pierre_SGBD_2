@@ -43,11 +43,6 @@ INSERT INTO VACCIN (nom) VALUES ('Vaccin CHPPiL') ON CONFLICT DO NOTHING;
 INSERT INTO VACCIN (nom) VALUES ('Vaccin contre la rage') ON CONFLICT DO NOTHING;
 INSERT INTO VACCIN (nom) VALUES ('Vaccin contre la leucose') ON CONFLICT DO NOTHING;
 
--- ============================================
--- EXEMPLE D'INSERTION D'UN CONTACT (optionnel)
--- ============================================
-
--- Décommentez pour créer un contact de test
 /*
 INSERT INTO CONTACT (nom, prenom, rue, cp, localite, registre_national, GSM, email)
 VALUES (

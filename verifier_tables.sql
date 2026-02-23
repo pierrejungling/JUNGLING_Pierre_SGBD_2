@@ -1,10 +1,6 @@
--- Script de vérification des tables de la base de données
--- Exécutez ce script pour vérifier que toutes les tables existent
-
 \echo 'Vérification de l''existence des tables...'
 \echo ''
 
--- Liste des tables à vérifier
 SELECT 
     table_name,
     CASE 

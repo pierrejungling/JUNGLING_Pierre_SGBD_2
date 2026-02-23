@@ -1,4 +1,5 @@
 using Npgsql;
+using NpgsqlTypes;
 using Metier;
 
 namespace DAL;
@@ -13,9 +14,12 @@ public class EntreeDAO
             "SELECT entree_ajouter(@raison, @date_entree, @ani_identifiant, @entree_contact)",
             conn);
         cmd.Parameters.AddWithValue("raison", entree.Raison);
-        cmd.Parameters.AddWithValue("date_entree", entree.DateEntree);
+        var pDate = new NpgsqlParameter("date_entree", NpgsqlDbType.Date);
+        pDate.Value = entree.DateEntree.Date;
+        cmd.Parameters.Add(pDate);
         cmd.Parameters.AddWithValue("ani_identifiant", entree.Animal.Identifiant);
-        cmd.Parameters.AddWithValue("entree_contact", (object?)entree.Contact?.Identifiant ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("entree_contact",
+            entree.Contact == null || entree.Contact.Identifiant <= 0 ? DBNull.Value : entree.Contact.Identifiant);
         cmd.ExecuteNonQuery();
     }
 

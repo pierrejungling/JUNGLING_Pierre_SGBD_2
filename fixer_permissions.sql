@@ -1,18 +1,7 @@
--- Script de correction des permissions pour refuge_animaux_user
--- Auteur: JUNGLING Pierre
--- Date: 2026
--- Base de données: PostgreSQL
--- 
--- IMPORTANT: Ce script doit être exécuté en tant que superutilisateur (postgres)
--- Exécution: psql -U postgres -d refuge_animaux -f fixer_permissions.sql
--- OU dans pgAdmin: Cliquez droit sur la base refuge_animaux -> Query Tool
---                  Connectez-vous en tant que postgres, puis exécutez ce script
-
 -- ============================================
 -- CORRECTION DES PERMISSIONS
 -- ============================================
 
--- S'assurer que l'utilisateur existe
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT FROM pg_catalog.pg_user WHERE usename = 'refuge_animaux_user') THEN
@@ -25,12 +14,10 @@ $$;
 GRANT ALL PRIVILEGES ON SCHEMA public TO refuge_animaux_user;
 GRANT USAGE ON SCHEMA public TO refuge_animaux_user;
 
--- Configurer les privilèges par défaut pour les objets futurs
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO refuge_animaux_user;
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO refuge_animaux_user;
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON FUNCTIONS TO refuge_animaux_user;
 
--- Donner tous les privilèges sur toutes les tables existantes ET changer le propriétaire
 DO $$
 DECLARE
     r RECORD;

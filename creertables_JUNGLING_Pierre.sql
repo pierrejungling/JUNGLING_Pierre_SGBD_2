@@ -1,8 +1,3 @@
--- Script de création des tables pour le refuge d'animaux
--- Auteur: JUNGLING Pierre
--- Date: 2026
--- Base de données: PostgreSQL
-
 -- ============================================
 -- SUPPRESSION DES OBJETS EXISTANTS
 -- ============================================
@@ -282,19 +277,16 @@ CREATE INDEX idx_vaccination_animal_date ON VACCINATION(vac_animal, vaccination_
 -- FONCTIONS ET TRIGGERS POUR LES CONTRAINTES COMPLEXES
 -- ============================================
 
--- Fonction pour vérifier qu'un animal ne peut pas être entré plus d'une fois sans sortie
 CREATE OR REPLACE FUNCTION check_entree_sans_sortie()
 RETURNS TRIGGER AS $$
 DECLARE
     derniere_sortie DATE;
 BEGIN
-    -- Trouver la date de la dernière sortie avant cette entrée
     SELECT MAX(date_sortie) INTO derniere_sortie
     FROM ANI_SORTIE
     WHERE ani_identifiant = NEW.ani_identifiant
     AND date_sortie < NEW.date_entree;
-    
-    -- Vérifier s'il existe une entrée sans sortie correspondante
+
     IF EXISTS (
         SELECT 1 FROM ANI_ENTREE e
         WHERE e.ani_identifiant = NEW.ani_identifiant
@@ -317,19 +309,16 @@ CREATE TRIGGER trigger_check_entree_sans_sortie
 BEFORE INSERT OR UPDATE ON ANI_ENTREE
 FOR EACH ROW EXECUTE FUNCTION check_entree_sans_sortie();
 
--- Fonction pour vérifier qu'il n'y a qu'une seule sortie depuis la dernière entrée
 CREATE OR REPLACE FUNCTION check_sortie_unique()
 RETURNS TRIGGER AS $$
 DECLARE
     derniere_entree DATE;
 BEGIN
-    -- Trouver la dernière entrée avant cette sortie
     SELECT MAX(date_entree) INTO derniere_entree
     FROM ANI_ENTREE
     WHERE ani_identifiant = NEW.ani_identifiant
     AND date_entree <= NEW.date_sortie;
-    
-    -- Si une entrée existe, vérifier qu'il n'y a pas déjà une sortie depuis cette entrée
+
     IF derniere_entree IS NOT NULL THEN
         IF EXISTS (
             SELECT 1 FROM ANI_SORTIE s
@@ -349,13 +338,11 @@ CREATE TRIGGER trigger_check_sortie_unique
 BEFORE INSERT OR UPDATE ON ANI_SORTIE
 FOR EACH ROW EXECUTE FUNCTION check_sortie_unique();
 
--- Fonction pour vérifier la cohérence entre date_deces et raison de sortie
 CREATE OR REPLACE FUNCTION check_deces_coherence()
 RETURNS TRIGGER AS $$
 DECLARE
     derniere_sortie_raison VARCHAR(50);
 BEGIN
-    -- Si date_deces est non null, vérifier que la dernière sortie a raison 'deces_animal'
     IF NEW.date_deces IS NOT NULL THEN
         SELECT raison INTO derniere_sortie_raison
         FROM ANI_SORTIE
@@ -381,7 +368,6 @@ FOR EACH ROW
 WHEN (NEW.date_deces IS NOT NULL)
 EXECUTE FUNCTION check_deces_coherence();
 
--- Fonction pour vérifier que si raison sortie = 'deces_animal', date_deces doit être non null
 CREATE OR REPLACE FUNCTION check_sortie_deces()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -405,28 +391,24 @@ FOR EACH ROW
 WHEN (NEW.raison = 'deces_animal')
 EXECUTE FUNCTION check_sortie_deces();
 
--- Fonction pour vérifier que si raison entrée = 'retour_adoption', il existe une sortie précédente avec raison = 'adoption'
 CREATE OR REPLACE FUNCTION check_retour_adoption()
 RETURNS TRIGGER AS $$
 BEGIN
     IF NEW.raison = 'retour_adoption' THEN
-        -- Vérifier que ce n'est pas la première entrée
         IF NOT EXISTS (
             SELECT 1 FROM ANI_ENTREE
             WHERE ani_identifiant = NEW.ani_identifiant
-            AND date_entree < NEW.date_entree
         ) THEN
             RAISE EXCEPTION 'Un retour d''adoption ne peut pas être la première entrée de l''animal';
         END IF;
-        
-        -- Vérifier qu'il existe une sortie précédente avec raison 'adoption'
+
         IF NOT EXISTS (
             SELECT 1 FROM ANI_SORTIE
             WHERE ani_identifiant = NEW.ani_identifiant
             AND raison = 'adoption'
-            AND date_sortie < NEW.date_entree
+            AND date_sortie <= NEW.date_entree
         ) THEN
-            RAISE EXCEPTION 'Un retour d''adoption nécessite une sortie précédente avec raison ''adoption''';
+            RAISE EXCEPTION 'Un retour d''adoption nécessite une sortie avec raison ''adoption'' (date de sortie <= date de retour).';
         END IF;
     END IF;
     
@@ -440,11 +422,9 @@ FOR EACH ROW
 WHEN (NEW.raison = 'retour_adoption')
 EXECUTE FUNCTION check_retour_adoption();
 
--- Fonction pour vérifier qu'un animal ne peut pas avoir plusieurs accueils actifs simultanément
 CREATE OR REPLACE FUNCTION check_accueil_unique_actif()
 RETURNS TRIGGER AS $$
 BEGIN
-    -- Vérifier s'il existe déjà un accueil actif (date_fin IS NULL)
     IF NEW.date_fin IS NULL THEN
         IF EXISTS (
             SELECT 1 FROM FAMILLE_ACCUEIL
@@ -466,7 +446,6 @@ FOR EACH ROW
 WHEN (NEW.date_fin IS NULL)
 EXECUTE FUNCTION check_accueil_unique_actif();
 
--- Fonction pour vérifier que si raison sortie = 'adoption', il existe une ADOPTION avec statut = 'acceptee'
 CREATE OR REPLACE FUNCTION check_adoption_acceptee()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -491,7 +470,6 @@ FOR EACH ROW
 WHEN (NEW.raison = 'adoption')
 EXECUTE FUNCTION check_adoption_acceptee();
 
--- Fonction pour vérifier que la date de vaccination >= date de naissance
 CREATE OR REPLACE FUNCTION check_vaccination_date()
 RETURNS TRIGGER AS $$
 DECLARE
@@ -513,8 +491,6 @@ CREATE TRIGGER trigger_check_vaccination_date
 BEFORE INSERT OR UPDATE ON VACCINATION
 FOR EACH ROW EXECUTE FUNCTION check_vaccination_date();
 
--- Fonction pour vérifier qu'un animal ne reçoit pas 2 fois le même vaccin le même jour
--- Note: La clé primaire composite empêche déjà cette situation, mais on garde la fonction pour un message d'erreur plus clair
 CREATE OR REPLACE FUNCTION check_vaccination_unique_jour()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -536,7 +512,6 @@ CREATE TRIGGER trigger_check_vaccination_unique_jour
 BEFORE INSERT OR UPDATE ON VACCINATION
 FOR EACH ROW EXECUTE FUNCTION check_vaccination_unique_jour();
 
--- Fonction pour vérifier qu'un animal décédé ne peut pas avoir d'entrées après sa mort
 CREATE OR REPLACE FUNCTION check_entree_apres_mort()
 RETURNS TRIGGER AS $$
 DECLARE
@@ -558,7 +533,6 @@ CREATE TRIGGER trigger_check_entree_apres_mort
 BEFORE INSERT OR UPDATE ON ANI_ENTREE
 FOR EACH ROW EXECUTE FUNCTION check_entree_apres_mort();
 
--- Fonction pour vérifier qu'un animal décédé ne peut pas avoir de sorties après sa mort
 CREATE OR REPLACE FUNCTION check_sortie_apres_mort()
 RETURNS TRIGGER AS $$
 DECLARE
@@ -580,7 +554,6 @@ CREATE TRIGGER trigger_check_sortie_apres_mort
 BEFORE INSERT OR UPDATE ON ANI_SORTIE
 FOR EACH ROW EXECUTE FUNCTION check_sortie_apres_mort();
 
--- Fonction pour vérifier qu'un animal décédé ne peut pas avoir de vaccinations après sa mort
 CREATE OR REPLACE FUNCTION check_vaccination_apres_mort()
 RETURNS TRIGGER AS $$
 DECLARE
@@ -602,7 +575,6 @@ CREATE TRIGGER trigger_check_vaccination_apres_mort
 BEFORE INSERT OR UPDATE ON VACCINATION
 FOR EACH ROW EXECUTE FUNCTION check_vaccination_apres_mort();
 
--- Fonction pour vérifier qu'un animal décédé ne peut pas avoir d'accueils après sa mort
 CREATE OR REPLACE FUNCTION check_accueil_apres_mort()
 RETURNS TRIGGER AS $$
 DECLARE
@@ -626,16 +598,3 @@ CREATE TRIGGER trigger_check_accueil_apres_mort
 BEFORE INSERT OR UPDATE ON FAMILLE_ACCUEIL
 FOR EACH ROW EXECUTE FUNCTION check_accueil_apres_mort();
 
--- ============================================
--- NOTES
--- ============================================
-
--- Contrainte : Chaque animal DOIT avoir au moins une entrée
--- Cette contrainte est vérifiée au niveau applicatif lors de l'ajout d'un animal
--- qui crée automatiquement une entrée au refuge
-
--- Pour améliorer les performances, les index ont été créés sur :
--- - Toutes les clés étrangères
--- - Les colonnes fréquemment utilisées dans les WHERE et JOIN
--- - Les colonnes utilisées dans les ORDER BY
--- - Les colonnes utilisées dans les contraintes de dates

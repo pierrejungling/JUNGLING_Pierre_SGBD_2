@@ -1,4 +1,5 @@
 using Npgsql;
+using NpgsqlTypes;
 using Metier;
 
 namespace DAL;
@@ -18,17 +19,26 @@ public class AnimalDAO
         cmd.Parameters.AddWithValue("type", animal.Type);
         cmd.Parameters.AddWithValue("sexe", animal.Sexe);
         cmd.Parameters.AddWithValue("particularites", (object?)animal.Particularite ?? DBNull.Value);
-        cmd.Parameters.AddWithValue("date_deces", (object?)animal.DateDeces ?? DBNull.Value);
+        AddDateParam(cmd, "date_deces", animal.DateDeces);
         cmd.Parameters.AddWithValue("description", (object?)animal.Description ?? DBNull.Value);
-        cmd.Parameters.AddWithValue("date_sterilisation", (object?)animal.DateSterilisation ?? DBNull.Value);
+        AddDateParam(cmd, "date_sterilisation", animal.DateSterilisation);
         cmd.Parameters.AddWithValue("sterilise", animal.Sterilise);
-        cmd.Parameters.AddWithValue("date_naissance", animal.DateNaissance);
+        AddDateParam(cmd, "date_naissance", animal.DateNaissance);
         cmd.ExecuteNonQuery();
 
         foreach (var couleur in animal.Couleurs)
             AjouterCouleur(animal.Identifiant, couleur);
         foreach (var compatibilite in animal.Compatibilites)
             AjouterCompatibilite(animal.Identifiant, compatibilite);
+    }
+
+    public static string ProchainIdentifiant(DateTime dateEntree)
+    {
+        using var conn = ConnexionBD.GetConnection();
+        conn.Open();
+        using var cmd = new NpgsqlCommand("SELECT animal_prochain_identifiant(@date)", conn);
+        AddDateParam(cmd, "date", dateEntree);
+        return (string)cmd.ExecuteScalar()!;
     }
 
     public static Animal? Consulter(string identifiant)
@@ -240,5 +250,12 @@ public class AnimalDAO
         cmd.Parameters.AddWithValue("valeur", compatibilite.Valeur);
         cmd.Parameters.AddWithValue("description", (object?)compatibilite.Description ?? DBNull.Value);
         cmd.ExecuteNonQuery();
+    }
+
+    private static void AddDateParam(NpgsqlCommand cmd, string name, DateTime? value)
+    {
+        var p = new NpgsqlParameter(name, NpgsqlDbType.Date);
+        p.Value = value.HasValue ? (object)value.Value.Date : DBNull.Value;
+        cmd.Parameters.Add(p);
     }
 }

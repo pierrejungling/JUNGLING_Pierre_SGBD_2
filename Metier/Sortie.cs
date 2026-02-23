@@ -3,7 +3,7 @@ namespace Metier;
 public class Sortie
 {
     public string Raison { get; set; } = string.Empty;
-    public DateTime DateSortie { get; set; } // Note: dans le diagramme c'est date_entree mais c'est probablement une erreur
+    public DateTime DateSortie { get; set; }
     public Animal Animal { get; set; } = new Animal();
     public Contact Contact { get; set; } = new Contact();
 
