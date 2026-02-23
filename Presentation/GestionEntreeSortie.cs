@@ -108,23 +108,13 @@ public class GestionEntreeSortie
             return;
         }
 
-        // Si raison = 'deces_animal', mettre à jour date_deces
+        DateTime? dateDecesPourProcedure = null;
         if (raison == "deces_animal")
         {
             Console.Write("Mettre à jour la date de décès de l'animal? (oui/non): ");
             string? confirmer = Console.ReadLine();
             if (confirmer?.ToLower() == "oui")
-            {
-                using var conn = DAL.ConnexionBD.GetConnection();
-                conn.Open();
-                using var cmd = new Npgsql.NpgsqlCommand(
-                    "UPDATE ANIMAL SET date_deces = @date_deces WHERE identifiant = @id",
-                    conn);
-                cmd.Parameters.AddWithValue("date_deces", dateSortie);
-                cmd.Parameters.AddWithValue("id", animalId);
-                cmd.ExecuteNonQuery();
-                Console.WriteLine("Date de décès mise à jour.");
-            }
+                dateDecesPourProcedure = dateSortie;
         }
 
         Console.Write("Identifiant du contact (optionnel, laissez vide si aucun): ");
@@ -144,7 +134,7 @@ public class GestionEntreeSortie
 
         try
         {
-            SortieDAO.Ajouter(sortie);
+            SortieDAO.Ajouter(sortie, dateDecesPourProcedure);
             Console.WriteLine("Sortie ajoutée avec succès!");
         }
         catch (Exception ex)

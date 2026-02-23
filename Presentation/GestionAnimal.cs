@@ -1,6 +1,5 @@
 using DAL;
 using Metier;
-using Npgsql;
 
 namespace Presentation;
 
@@ -268,45 +267,7 @@ public class GestionAnimal
         
         try
         {
-            // Utiliser la méthode privée d'AnimalDAO via réflexion ou créer une méthode publique
-            using var conn = DAL.ConnexionBD.GetConnection();
-            conn.Open();
-            
-            // Chercher ou créer le type de compatibilité
-            using var cmdFind = new NpgsqlCommand(
-                "SELECT identifiant FROM COMPATIBILITE WHERE type = @type",
-                conn);
-            cmdFind.Parameters.AddWithValue("type", compatibilite.Type);
-            var compId = cmdFind.ExecuteScalar();
-            
-            if (compId == null)
-            {
-                using var cmdInsert = new NpgsqlCommand(
-                    "INSERT INTO COMPATIBILITE (type) VALUES (@type) RETURNING identifiant",
-                    conn);
-                cmdInsert.Parameters.AddWithValue("type", compatibilite.Type);
-                compId = cmdInsert.ExecuteScalar();
-            }
-            
-            // Lier l'animal à la compatibilité
-            if (compId == null)
-            {
-                Console.WriteLine("Erreur: Impossible de créer ou trouver le type de compatibilité.");
-                return;
-            }
-            
-            int compIdValue = Convert.ToInt32(compId);
-            
-            using var cmdLink = new NpgsqlCommand(
-                @"INSERT INTO ANI_COMPATIBILITE (valeur, description, comp_identifiant, ani_identifiant) 
-                  VALUES (@valeur, @description, @compId, @animalId) ON CONFLICT DO NOTHING",
-                conn);
-            cmdLink.Parameters.AddWithValue("valeur", compatibilite.Valeur);
-            cmdLink.Parameters.AddWithValue("description", (object?)compatibilite.Description ?? DBNull.Value);
-            cmdLink.Parameters.AddWithValue("compId", compIdValue);
-            cmdLink.Parameters.AddWithValue("animalId", animal.Identifiant);
-            cmdLink.ExecuteNonQuery();
-            
+            AnimalDAO.AjouterCompatibilitePourAnimal(animal.Identifiant, compatibilite);
             Console.WriteLine("Compatibilité ajoutée avec succès!");
         }
         catch (Exception ex)
@@ -320,16 +281,7 @@ public class GestionAnimal
         Console.Write("Nouvelle description: ");
         string? description = Console.ReadLine();
         if (string.IsNullOrWhiteSpace(description)) description = null;
-
-        using var conn = DAL.ConnexionBD.GetConnection();
-        conn.Open();
-        using var cmd = new NpgsqlCommand(
-            "UPDATE ANIMAL SET description = @desc WHERE identifiant = @id",
-            conn);
-        cmd.Parameters.AddWithValue("desc", (object?)description ?? DBNull.Value);
-        cmd.Parameters.AddWithValue("id", animal.Identifiant);
-        cmd.ExecuteNonQuery();
-        
+        AnimalDAO.ModifierDescription(animal.Identifiant, description);
         Console.WriteLine("Description modifiée avec succès!");
     }
 
@@ -338,16 +290,7 @@ public class GestionAnimal
         Console.Write("Nouvelles particularités: ");
         string? particularites = Console.ReadLine();
         if (string.IsNullOrWhiteSpace(particularites)) particularites = null;
-
-        using var conn = DAL.ConnexionBD.GetConnection();
-        conn.Open();
-        using var cmd = new NpgsqlCommand(
-            "UPDATE ANIMAL SET particularites = @part WHERE identifiant = @id",
-            conn);
-        cmd.Parameters.AddWithValue("part", (object?)particularites ?? DBNull.Value);
-        cmd.Parameters.AddWithValue("id", animal.Identifiant);
-        cmd.ExecuteNonQuery();
-        
+        AnimalDAO.ModifierParticularites(animal.Identifiant, particularites);
         Console.WriteLine("Particularités modifiées avec succès!");
     }
 
@@ -364,41 +307,7 @@ public class GestionAnimal
 
         try
         {
-            using var conn = DAL.ConnexionBD.GetConnection();
-            conn.Open();
-            
-            // Chercher ou créer la couleur
-            using var cmdFind = new NpgsqlCommand(
-                "SELECT col_identifiant FROM COULEUR WHERE nom_couleur = @nom",
-                conn);
-            cmdFind.Parameters.AddWithValue("nom", couleur);
-            var couleurId = cmdFind.ExecuteScalar();
-            
-            if (couleurId == null)
-            {
-                using var cmdInsert = new NpgsqlCommand(
-                    "INSERT INTO COULEUR (nom_couleur) VALUES (@nom) RETURNING col_identifiant",
-                    conn);
-                cmdInsert.Parameters.AddWithValue("nom", couleur);
-                couleurId = cmdInsert.ExecuteScalar();
-            }
-            
-            // Lier l'animal à la couleur
-            if (couleurId == null)
-            {
-                Console.WriteLine("Erreur: Impossible de créer ou trouver la couleur.");
-                return;
-            }
-            
-            int couleurIdValue = Convert.ToInt32(couleurId);
-            
-            using var cmdLink = new NpgsqlCommand(
-                "INSERT INTO ANIMAL_COULEUR (col_identifiant, ani_identifiant) VALUES (@couleurId, @animalId) ON CONFLICT DO NOTHING",
-                conn);
-            cmdLink.Parameters.AddWithValue("couleurId", couleurIdValue);
-            cmdLink.Parameters.AddWithValue("animalId", animal.Identifiant);
-            cmdLink.ExecuteNonQuery();
-            
+            AnimalDAO.AjouterCouleurPourAnimal(animal.Identifiant, couleur);
             Console.WriteLine("Couleur ajoutée avec succès!");
         }
         catch (Exception ex)
@@ -458,18 +367,7 @@ public class GestionAnimal
 
         try
         {
-            using var conn = DAL.ConnexionBD.GetConnection();
-            conn.Open();
-            
-            using var cmd = new NpgsqlCommand(
-                @"DELETE FROM ANI_COMPATIBILITE 
-                  WHERE ani_identifiant = @ani_id 
-                  AND comp_identifiant = (SELECT identifiant FROM COMPATIBILITE WHERE type = @type)",
-                conn);
-            cmd.Parameters.AddWithValue("ani_id", animal.Identifiant);
-            cmd.Parameters.AddWithValue("type", compatibilite.Type);
-            cmd.ExecuteNonQuery();
-            
+            AnimalDAO.SupprimerCompatibilite(animal.Identifiant, compatibilite.Type);
             Console.WriteLine("Compatibilité supprimée avec succès!");
         }
         catch (Exception ex)
@@ -497,18 +395,7 @@ public class GestionAnimal
 
         try
         {
-            using var conn = DAL.ConnexionBD.GetConnection();
-            conn.Open();
-            
-            using var cmd = new NpgsqlCommand(
-                @"DELETE FROM ANIMAL_COULEUR 
-                  WHERE ani_identifiant = @ani_id 
-                  AND col_identifiant = (SELECT col_identifiant FROM COULEUR WHERE nom_couleur = @nom)",
-                conn);
-            cmd.Parameters.AddWithValue("ani_id", animal.Identifiant);
-            cmd.Parameters.AddWithValue("nom", couleur);
-            cmd.ExecuteNonQuery();
-            
+            AnimalDAO.SupprimerCouleur(animal.Identifiant, couleur);
             Console.WriteLine("Couleur supprimée avec succès!");
         }
         catch (Exception ex)

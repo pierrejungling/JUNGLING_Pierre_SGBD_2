@@ -8,16 +8,11 @@ public class RoleDAO
     public static List<Role> ListerTous()
     {
         var roles = new List<Role>();
-        
         using var conn = ConnexionBD.GetConnection();
         conn.Open();
-        
         try
         {
-            using var cmd = new NpgsqlCommand(
-                "SELECT rol_identifiant, rol_nom FROM ROLE ORDER BY rol_nom",
-                conn);
-            
+            using var cmd = new NpgsqlCommand("SELECT * FROM role_lister_tous()", conn);
             using var reader = cmd.ExecuteReader();
             while (reader.Read())
             {
@@ -32,11 +27,9 @@ public class RoleDAO
         {
             throw new InvalidOperationException(
                 "La table ROLE n'existe pas dans la base de données.\n" +
-                "Vérifiez que le script SQL de création des tables a été exécuté complètement.\n" +
-                "Exécutez: psql -U refuge_animaux_user -d refuge_animaux -f creertables_JUNGLING_Pierre.sql",
+                "Vérifiez que le script SQL de création des tables a été exécuté complètement.",
                 ex);
         }
-        
         return roles;
     }
 }

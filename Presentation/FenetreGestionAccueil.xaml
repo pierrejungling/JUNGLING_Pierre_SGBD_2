@@ -1,0 +1,25 @@
+<Window x:Class="Presentation.FenetreGestionAccueil"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Gestion des familles d'accueil" Height="420" Width="520"
+        WindowStartupLocation="CenterOwner">
+    <Grid Margin="15">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <TextBlock Text="Familles d'accueil" FontSize="16" FontWeight="Bold" Margin="0,0,0,10"/>
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,10">
+            <TextBlock Text="ID animal:" VerticalAlignment="Center" Margin="0,0,5,0"/>
+            <TextBox x:Name="TxtIdAnimal" Width="120" Margin="0,0,15,0"/>
+            <Button Content="Lister par animal" Padding="10,5" Click="ListerParAnimal_Click"/>
+            <TextBlock Text="  ID contact:" VerticalAlignment="Center" Margin="15,0,5,0"/>
+            <TextBox x:Name="TxtIdContact" Width="80" Margin="0,0,10,0"/>
+            <Button Content="Lister par famille" Padding="10,5" Click="ListerParFamille_Click"/>
+        </StackPanel>
+        <ListBox x:Name="ListeAccueils" Grid.Row="2" DisplayMemberPath="DateDebut"/>
+        <Button Grid.Row="3" Content="Fermer" HorizontalAlignment="Left" Margin="0,10,0,0" Padding="12,6" Click="Fermer_Click"/>
+    </Grid>
+</Window>

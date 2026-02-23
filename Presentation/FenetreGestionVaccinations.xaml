@@ -1,0 +1,22 @@
+<Window x:Class="Presentation.FenetreGestionVaccinations"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Gestion des vaccinations" Height="380" Width="500"
+        WindowStartupLocation="CenterOwner">
+    <Grid Margin="15">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <TextBlock Text="Vaccinations par animal" FontSize="16" FontWeight="Bold" Margin="0,0,0,10"/>
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,10">
+            <TextBlock Text="ID animal:" VerticalAlignment="Center" Margin="0,0,5,0"/>
+            <TextBox x:Name="TxtIdAnimal" Width="140" Margin="0,0,10,0"/>
+            <Button Content="Afficher les vaccinations" Padding="10,5" Click="Afficher_Click"/>
+        </StackPanel>
+        <ListBox x:Name="ListeVaccinations" Grid.Row="2" DisplayMemberPath="DateVaccination"/>
+        <Button Grid.Row="3" Content="Fermer" HorizontalAlignment="Left" Margin="0,10,0,0" Padding="12,6" Click="Fermer_Click"/>
+    </Grid>
+</Window>

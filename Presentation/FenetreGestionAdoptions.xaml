@@ -1,0 +1,20 @@
+<Window x:Class="Presentation.FenetreGestionAdoptions"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Gestion des adoptions" Height="400" Width="560"
+        WindowStartupLocation="CenterOwner">
+    <Grid Margin="15">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <TextBlock Text="Adoptions" FontSize="16" FontWeight="Bold" Margin="0,0,0,10"/>
+        <ListBox x:Name="ListeAdoptions" Grid.Row="1" DisplayMemberPath="Statut" SelectionChanged="ListeAdoptions_SelectionChanged"/>
+        <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,10,0,0">
+            <Button Content="Rafraîchir" Margin="0,0,8,0" Padding="12,6" Click="Rafraichir_Click"/>
+            <Button Content="Voir détail" Margin="0,0,8,0" Padding="12,6" Click="VoirDetail_Click"/>
+            <Button Content="Fermer" Padding="12,6" Click="Fermer_Click"/>
+        </StackPanel>
+    </Grid>
+</Window>
